@@ -89,7 +89,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         Delay the setup until Home Assistant is fully initialized.
         This allows any entities to be created already
         """
-        global min_update_interval
+        global MIN_TIME_BETWEEN_UPDATES
         host = config.get(CONF_HOST)
         port = config.get(CONF_PORT)
         username = config.get(CONF_USERNAME)
@@ -97,7 +97,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         use_ssl = config.get(CONF_SSL)
         unit = hass.config.units.temperature_unit
         monitored_conditions = config.get(CONF_MONITORED_CONDITIONS)
-        min_update_interval = config.get(CONF_SCAN_INTERVAL)
+        MIN_TIME_BETWEEN_UPDATES = config.get(CONF_SCAN_INTERVAL)
 
         api = SynoApi(host, port, username, password, unit, use_ssl)
 
@@ -144,7 +144,7 @@ class SynoApi:
         self.utilisation = self._api.utilisation
         self.storage = self._api.storage
 
-    @Throttle(min_update_interval)
+    @Throttle(MIN_TIME_BETWEEN_UPDATES)
     def update(self):
         """Update function for updating api information."""
         self._api.update()
