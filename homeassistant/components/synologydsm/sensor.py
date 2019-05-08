@@ -9,7 +9,7 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (
     CONF_HOST, CONF_USERNAME, CONF_PASSWORD, CONF_PORT, CONF_SSL,
     ATTR_ATTRIBUTION, TEMP_CELSIUS, CONF_MONITORED_CONDITIONS,
-    EVENT_HOMEASSISTANT_START, CONF_DISKS)
+    EVENT_HOMEASSISTANT_START, CONF_DISKS, CONF_SCAN_INTERVAL)
 from homeassistant.helpers.entity import Entity
 from homeassistant.util import Throttle
 
@@ -77,6 +77,7 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
         vol.All(cv.ensure_list, [vol.In(_MONITORED_CONDITIONS)]),
     vol.Optional(CONF_DISKS): cv.ensure_list,
     vol.Optional(CONF_VOLUMES): cv.ensure_list,
+    vol.Optional(CONF_SCAN_INTERVAL, default=MIN_TIME_BETWEEN_UPDATES): cv.time_period,
 })
 
 
@@ -88,6 +89,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         Delay the setup until Home Assistant is fully initialized.
         This allows any entities to be created already
         """
+        global min_update_interval
         host = config.get(CONF_HOST)
         port = config.get(CONF_PORT)
         username = config.get(CONF_USERNAME)
@@ -95,6 +97,7 @@ def setup_platform(hass, config, add_entities, discovery_info=None):
         use_ssl = config.get(CONF_SSL)
         unit = hass.config.units.temperature_unit
         monitored_conditions = config.get(CONF_MONITORED_CONDITIONS)
+        min_update_interval = config.get(CONF_SCAN_INTERVAL)
 
         api = SynoApi(host, port, username, password, unit, use_ssl)
 
@@ -141,7 +144,7 @@ class SynoApi:
         self.utilisation = self._api.utilisation
         self.storage = self._api.storage
 
-    @Throttle(MIN_TIME_BETWEEN_UPDATES)
+    @Throttle(min_update_interval)
     def update(self):
         """Update function for updating api information."""
         self._api.update()
